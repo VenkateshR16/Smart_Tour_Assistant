@@ -114,10 +114,7 @@ does not run migrations inside web requests.
      (for example, `.vercel.app,your-domain.example`).
    - `CSRF_TRUSTED_ORIGINS`: optional for a custom domain, including the scheme
      (for example, `https://your-domain.example`).
-4. Deploy from the Vercel dashboard. The build command in `vercel.json` installs
-   frontend dependencies and builds `frontend/dist`; Django serves the API and
-   Vercel collects and serves Django static files.
-5. Initialize the database once from a terminal with the Vercel CLI installed
+4. Initialize the database before serving traffic, from a terminal with the Vercel CLI installed
    and linked to this project:
 
    ```powershell
@@ -131,6 +128,9 @@ does not run migrations inside web requests.
 
    `.env.local` is ignored by Git. To administer users, create a superuser with
    `python manage.py createsuperuser` after migrations.
+5. Deploy (or redeploy) from the Vercel dashboard. The build command in
+   `vercel.json` installs frontend dependencies and builds `frontend/dist`;
+   Django serves the API and Vercel collects and serves Django static files.
 
 After setup, future pushes to the connected GitHub branch trigger deployments.
 Database migrations should be run explicitly when the schema changes.
