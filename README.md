@@ -120,14 +120,15 @@ does not run migrations inside web requests.
    ```powershell
    npx vercel login
    npx vercel link
-   npx vercel env pull .env.local
    python -m pip install -r requirements.txt
-   python manage.py migrate
-   python manage.py import_places
+   npx vercel env run -e production -- python manage.py migrate
+   npx vercel env run -e production -- python manage.py import_places
    ```
 
-   `.env.local` is ignored by Git. To administer users, create a superuser with
-   `python manage.py createsuperuser` after migrations.
+   The CLI supplies production environment variables to each command without
+   writing them to a local file. To administer users, run
+   `npx vercel env run -e production -- python manage.py createsuperuser`
+   after migrations.
 5. Deploy (or redeploy) from the Vercel dashboard. The build command in
    `vercel.json` installs frontend dependencies and builds `frontend/dist`;
    Django serves the API and Vercel collects and serves Django static files.
