@@ -1,19 +1,28 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
+# Prefer Vercel CLI's local environment file; process environment variables still take precedence.
+load_dotenv(BASE_DIR / '.env.local')
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-sih-yatra-ai-key-prototype-2026')
+IS_VERCEL = 'VERCEL' in os.environ or os.getenv('SERVERLESS') == '1'
 
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if IS_VERCEL and not SECRET_KEY:
+    raise ImproperlyConfigured('Set SECRET_KEY in the Vercel project environment variables.')
+SECRET_KEY = SECRET_KEY or 'django-insecure-sih-yatra-ai-key-prototype-2026'
 
-# Allowed Hosts & CSRF Settings for Vercel & Production
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+DEBUG = os.getenv('DEBUG', 'False' if IS_VERCEL else 'True').lower() in ('true', '1', 't')
+
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1,.vercel.app,.now.sh',
+).split(',')
 ALLOWED_HOSTS.extend(['.vercel.app', '.now.sh', 'localhost', '127.0.0.1'])
 ALLOWED_HOSTS = list(set([h.strip() for h in ALLOWED_HOSTS if h.strip()]))
 
@@ -26,6 +35,10 @@ CSRF_TRUSTED_ORIGINS = [
 extra_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if extra_csrf:
     CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in extra_csrf.split(',') if origin.strip()])
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 
@@ -72,9 +85,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database Configuration (Supports Local SQLite, Vercel Serverless /tmp SQLite, and PostgreSQL via DATABASE_URL)
-IS_VERCEL = 'VERCEL' in os.environ or os.getenv('SERVERLESS') == '1'
-
+# Use persistent PostgreSQL on Vercel and local SQLite for development.
 if os.getenv('DATABASE_URL'):
     import dj_database_url
     DATABASES = {
@@ -82,26 +93,11 @@ if os.getenv('DATABASE_URL'):
             default=os.getenv('DATABASE_URL'),
             conn_max_age=600,
             conn_health_checks=True,
+            ssl_require=IS_VERCEL,
         )
     }
 elif IS_VERCEL:
-    # On Vercel, /var/task is read-only. Copy database to /tmp if it exists
-    TMP_DB = Path('/tmp/db.sqlite3')
-    ORIGINAL_DB = BASE_DIR / 'db.sqlite3'
-
-    if ORIGINAL_DB.exists() and not TMP_DB.exists():
-        try:
-            import shutil
-            shutil.copyfile(ORIGINAL_DB, TMP_DB)
-        except Exception as e:
-            print("Failed to copy original db.sqlite3 to /tmp:", e)
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': TMP_DB if (TMP_DB.exists() or not ORIGINAL_DB.exists()) else ORIGINAL_DB,
-        }
-    }
+    raise ImproperlyConfigured('Set DATABASE_URL to a persistent PostgreSQL database in Vercel.')
 else:
     DATABASES = {
         'default': {
@@ -146,6 +142,4 @@ LOGOUT_REDIRECT_URL = 'home'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '') or os.getenv('AI_API_KEY', '')
 AI_API_KEY = GEMINI_API_KEY
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.6-flash')
-
-
 

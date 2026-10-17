@@ -88,6 +88,53 @@ python manage.py runserver
 ```
 Open your browser at `http://127.0.0.1:8000/`.
 
+## Deploy to Vercel
+
+The Django app runs as a Vercel Function. Vercel's filesystem is temporary, so
+configure a persistent PostgreSQL database before deploying; the app deliberately
+does not run migrations inside web requests.
+
+1. In Vercel, import `VenkateshR16/Smart_Tour_Assistant` and keep the **Root
+   Directory** set to the repository root (the folder containing `manage.py`).
+   Leave the Framework Preset on **Django** or **Other**; the repository's
+   `vercel.json` builds the React frontend and Vercel detects Django from
+   `manage.py`.
+2. Add a PostgreSQL database through Vercel Marketplace (for example, Neon) and
+   connect it to this Vercel project. Confirm the project has a `DATABASE_URL`
+   environment variable. The PostgreSQL driver is included in `requirements.txt`.
+3. In **Settings → Environment Variables**, set:
+   - `SECRET_KEY`: a new, random Django secret (do not reuse the example key).
+     Generate one locally with `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+     and paste the output into Vercel; do not commit it.
+   - `DEBUG`: `False`.
+   - `DATABASE_URL`: supplied by your connected PostgreSQL provider.
+   - `GEMINI_API_KEY`: optional; without it, itinerary generation uses the
+     offline fallback.
+   - `ALLOWED_HOSTS`: optional for a custom domain, as a comma-separated list
+     (for example, `.vercel.app,your-domain.example`).
+   - `CSRF_TRUSTED_ORIGINS`: optional for a custom domain, including the scheme
+     (for example, `https://your-domain.example`).
+4. Deploy from the Vercel dashboard. The build command in `vercel.json` installs
+   frontend dependencies and builds `frontend/dist`; Django serves the API and
+   Vercel collects and serves Django static files.
+5. Initialize the database once from a terminal with the Vercel CLI installed
+   and linked to this project:
+
+   ```powershell
+   npx vercel login
+   npx vercel link
+   npx vercel env pull .env.local
+   python -m pip install -r requirements.txt
+   python manage.py migrate
+   python manage.py import_places
+   ```
+
+   `.env.local` is ignored by Git. To administer users, create a superuser with
+   `python manage.py createsuperuser` after migrations.
+
+After setup, future pushes to the connected GitHub branch trigger deployments.
+Database migrations should be run explicitly when the schema changes.
+
 ---
 
 ## Prototype Demonstration Flow (For SIH Judges)
