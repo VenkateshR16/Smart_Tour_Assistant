@@ -4,7 +4,7 @@ import { Compass } from 'lucide-react';
 export const Footer: React.FC = () => {
   return (
     <footer className="glass-panel bg-white border-t border-slate-200 py-12 px-4 lg:px-8 mt-20 relative z-10 text-left">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white">
@@ -37,20 +37,6 @@ export const Footer: React.FC = () => {
           </ul>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Repository</h4>
-          <a
-            href="https://github.com/gunjit0410-oss/YatraAI"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-bold text-amber-600 hover:text-amber-700"
-          >
-            github.com/gunjit0410-oss/YatraAI
-          </a>
-          <p className="text-[11px] text-slate-500 font-medium">
-            Crafted with passion for Indian Tourism.
-          </p>
-        </div>
       </div>
 
       <div className="max-w-7xl mx-auto border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 font-bold gap-2">
